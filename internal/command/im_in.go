@@ -43,11 +43,25 @@ func (self *imInCommand) loadAppConfig() *imInCommand {
 }
 
 func (self *imInCommand) loadCache() *imInCommand {
-	self.cache = data.NewCacheFromBinary(constant.ConfigPath)
+	self.cache = data.NewCacheFromBinary(constant.CachePath)
 	return self
 }
 
 func (self *imInCommand) sshConnect() *imInCommand {
-	//
+  var stud model.Student
+  id, err := self.Args.ID.Get()
+
+  if err != nil {
+    stud = self.student
+  } else {
+    studID := model.StudentID(id)
+    stud, err = self.cache.GetByID(studID)
+
+    if err != nil {
+      panic(err)
+    }
+  }
+
+  util.MustSshShell(stud, self.sshConfig)
 	return self
 }

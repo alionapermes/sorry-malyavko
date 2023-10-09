@@ -33,7 +33,7 @@ func run(cmd *cobra.Command, cmdArgs []string) {
   var args command.ImInArgs
 
 	if len(cmdArgs) == 1 {
-    id := util.MustParseUint16(cmdArgs[1])
+    id := util.MustParseUint16(cmdArgs[0])
     args.ID = optional.NewUint16(id)
   }
 
