@@ -102,7 +102,7 @@ func (self *initCommand) createAppConfig() *initCommand {
 		*model.SshConfig
 	}
 
-	appConfigFile := util.MustCreateFile(constant.CachePath)
+	appConfigFile := util.MustCreateFile(constant.ConfigPath)
 	defer appConfigFile.Close()
 
 	config := appConfig{
