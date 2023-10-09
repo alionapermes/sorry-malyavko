@@ -5,4 +5,4 @@ app: clear
 	go build -o ${TARGET} ${SOURCE}
 
 clear:
-	rm ${TARGET}
+	rm -f ${TARGET}
