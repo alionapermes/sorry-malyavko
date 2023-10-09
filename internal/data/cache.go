@@ -1,9 +1,7 @@
 package data
 
 import (
-	// "bytes"
-	// "encoding/binary"
-	// "encoding/gob"
+	"errors"
 	"io"
 
 	"github.com/alionapermes/sorry-malyavko/internal/constant"
@@ -31,10 +29,7 @@ func NewCacheFromUserlist(reader io.Reader) *Cache {
 		students: make(studentsMap),
 	}
 
-	studentsChan := make(chan model.Student)
-	util.MustParseUserlist(studentsChan, reader)
-
-	for student := range studentsChan {
+	for student := range util.MustParseUserlist(reader) {
 		cache.students[student.ID] = student.Password
 	}
 
@@ -49,6 +44,25 @@ func (self *Cache) Save() {
   compressed := util.Compress(data)
 
   cacheFile.Write(compressed)
+}
+
+func (self *Cache) GetByID(id model.StudentID) (model.Student, error) {
+  if password, ok := self.students[id]; ok {
+    return model.Student{ID: id, Password: password}, nil
+  }
+
+  return model.Student{}, errors.New("Not found")
+}
+
+func (self *Cache) GetAll() <-chan model.Student {
+	studChan := make(chan model.Student)
+	go func() {
+    for id, password := range self.students {
+      studChan <- model.Student{ID: id, Password: password}
+    }
+    close(studChan)
+  }()
+	return studChan
 }
 
 func (self *Cache) loadFromBinary() {
