@@ -2,23 +2,8 @@ package util
 
 import (
 	"bytes"
-	// "encoding/binary"
 	"encoding/gob"
-	// "io"
 )
-
-// func MustBinaryRead(reader io.Reader, data any) {
-// 	if err := binary.Read(reader, binary.BigEndian, &data); err != nil {
-// 		panic(err)
-// 	}
-// }
-//
-//
-// func MustBinaryWrite(writer io.Writer, data any) {
-// 	if err := binary.Write(writer, binary.BigEndian, data); err != nil {
-// 		panic(err)
-// 	}
-// }
 
 func MustBinaryEncode(data any) []byte {
   var buf bytes.Buffer

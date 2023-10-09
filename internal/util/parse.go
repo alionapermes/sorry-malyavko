@@ -10,7 +10,7 @@ import (
 	"github.com/alionapermes/sorry-malyavko/internal/model"
 )
 
-func MustParseUserlist(studentsChan chan model.Student, reader io.Reader) {
+func MustParseUserlist(reader io.Reader) <-chan model.Student {
   data, err := io.ReadAll(reader)
   if err != nil {
     panic(err)
@@ -19,37 +19,50 @@ func MustParseUserlist(studentsChan chan model.Student, reader io.Reader) {
   pattern := fmt.Sprintf(`stud0?(\d+)\s+(\w{%d})`, constant.StudentPasswordLength)
   expr := regexp.MustCompile(pattern)
 
-  linesChan := make(chan string)
-  readLines(linesChan, data)
+  studentsChan := make(chan model.Student)
 
-  for line := range linesChan {
-    res := expr.FindStringSubmatch(line)
+  go func() {
+    for line := range readLines(data) {
+      res := expr.FindStringSubmatch(line)
 
-    num, err := strconv.Atoi(res[1])
-    if err != nil {
-      panic(err)
+      num, err := strconv.Atoi(res[1])
+      if err != nil {
+        panic(err)
+      }
+
+      id := model.StudentID(num)
+      password := model.StudentPassword([]byte(res[2]))
+
+      studentsChan <- model.Student{ID: id, Password: password}
     }
 
-    id := model.StudentID(num)
-    password := model.StudentPassword([]byte(res[2]))
+    close(studentsChan)
+  }()
 
-    studentsChan <- model.Student{ID: id, Password: password}
-  }
+  return studentsChan
 }
 
-func readLines(linesChan chan<- string, data []byte) {
+func readLines(data []byte) <-chan string {
   nl := byte('\n')
   from := 0
 
-  for idx, char := range data {
-    if char == nl {
-      linesChan <- string(data[from:idx])
-      from = idx + 1
-    }
-  }
+  linesChan := make(chan string)
 
-  idxLast := len(data)
-  if from < idxLast {
-    linesChan <- string(data[from:idxLast])
-  }
+  go func() {
+    for idx, char := range data {
+      if char == nl {
+        linesChan <- string(data[from:idx])
+        from = idx + 1
+      }
+    }
+
+    idxLast := len(data)
+    if from < idxLast {
+      linesChan <- string(data[from:idxLast])
+    }
+
+    close(linesChan)
+  }()
+
+  return linesChan
 }

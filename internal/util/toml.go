@@ -14,7 +14,7 @@ func MustTomlEncode(file *os.File, data any) {
 }
 
 func MustTomlDecodeFile(path string, data any) {
-  if _, err := toml.DecodeFile(path, &data); err != nil {
+  if _, err := toml.DecodeFile(path, data); err != nil {
     panic(err)
   }
 }
