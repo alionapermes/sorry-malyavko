@@ -37,7 +37,7 @@ func NewCacheFromUserlist(reader io.Reader) *Cache {
 }
 
 func (self *Cache) Save() {
-	cacheFile := util.MustCreateFile(constant.CachePath)
+	cacheFile := util.MustCreateFile(constant.CachePath, true)
 	defer cacheFile.Close()
 
   data := util.MustBinaryEncode(self.students)
