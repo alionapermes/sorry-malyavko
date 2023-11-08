@@ -22,6 +22,12 @@ func main() {
 }
 
 func run() int {
+  defer func() {
+    if err := recover(); err != nil {
+      fmt.Println("Runtime error:", err)
+    }
+  }()
+
 	cli := &cobra.Command{
 		Use: "sorry-malyavko",
   }
