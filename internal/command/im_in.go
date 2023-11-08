@@ -1,6 +1,8 @@
 package command
 
 import (
+	"fmt"
+
 	"github.com/markphelps/optional"
 
 	"github.com/alionapermes/sorry-malyavko/internal/constant"
@@ -62,6 +64,22 @@ func (self *imInCommand) sshConnect() *imInCommand {
     }
   }
 
-  util.MustSshShell(stud, self.sshConfig)
+  sshConnectRetry(&stud, &self.sshConfig, 3)
 	return self
+}
+
+func sshConnectRetry(stud *model.Student, sshConfig *model.SshConfig, n int) {
+  defer func() {
+    err := recover()
+    if err == nil {
+      return
+    } else if n > 0 {
+      fmt.Printf("Connection attempt #%d failed. Retrying…\n", n)
+      sshConnectRetry(stud, sshConfig, n - 1)
+    } else {
+      panic(err)
+    }
+  }()
+
+  util.MustSshShell(*stud, *sshConfig)
 }
