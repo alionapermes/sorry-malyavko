@@ -10,4 +10,4 @@ shitos: clear
 all: linux shitos
 
 clear:
-	rm -f ${TARGET}
+	rm -f ${TARGET} ${TARGET}.exe
