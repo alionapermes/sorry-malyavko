@@ -1,9 +1,11 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/bramvdbogaerde/go-scp"
 	"github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 
@@ -72,6 +74,21 @@ func MustSftpOpen(client *sftp.Client, path string) *sftp.File {
     panic(err)
   }
   return file
+}
+
+func MustScpClient(sshClient *ssh.Client) *scp.Client {
+  scpClient, err := scp.NewClientBySSH(sshClient)
+  if err != nil {
+    panic(err)
+  }
+  return &scpClient
+}
+
+func MustScpCopyRemote(sshClient *ssh.Client, file *os.File, path string) {
+  scpClient := MustScpClient(sshClient)
+  if err := scpClient.CopyFromRemote(context.TODO(), file, path); err != nil {
+    panic(err)
+  }
 }
 
 func makeUsername(id model.StudentID) string {

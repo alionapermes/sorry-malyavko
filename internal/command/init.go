@@ -1,9 +1,7 @@
 package command
 
 import (
-	"log"
-
-	"github.com/markphelps/optional"
+	"fmt"
 
 	"github.com/alionapermes/sorry-malyavko/internal/constant"
 	"github.com/alionapermes/sorry-malyavko/internal/data"
@@ -12,8 +10,8 @@ import (
 )
 
 type InitFlags struct {
-	ID               optional.Uint16
-	Password         optional.String
+	ID               *uint16
+	Password         *string
 	DefaultSshConfig bool
 }
 
@@ -35,14 +33,20 @@ func Init(flags InitFlags) {
 }
 
 func (self *initCommand) readStudent() *initCommand {
-  log.Println("readStudent")
-	id, err := self.Flags.ID.Get()
-	if err != nil {
+  var id uint16
+  var password string
+
+  if n := self.Flags.ID; n != nil {
+    id = *n
+  } else {
+    fmt.Print("ID: ")
 		id = util.MustScanUint16()
 	}
 
-	password, err := self.Flags.Password.Get()
-	if err != nil {
+  if p := self.Flags.Password; p != nil {
+    password = *p
+  } else {
+    fmt.Print("Password: ")
 		password = util.MustScanStudentPassword()
 	}
 
@@ -51,52 +55,46 @@ func (self *initCommand) readStudent() *initCommand {
 }
 
 func (self *initCommand) readSshConfig() *initCommand {
-  log.Println("readSshConfig")
-	var config model.SshConfig
+  var host string
+  var port uint16
 
 	if self.Flags.DefaultSshConfig {
-		config = model.SshConfig{
-			Host: constant.DefaultHost,
-			Port: constant.DefaultPort,
-		}
+    host = constant.DefaultHost
+    port = constant.DefaultPort
 	} else {
-		config = model.SshConfig{
-			Host: util.ScanHostOr(constant.DefaultHost),
-			Port: util.ScanPortOr(constant.DefaultPort),
-		}
+    fmt.Printf("Host (%s by default): ", constant.DefaultHost)
+		host = util.ScanHostOr(constant.DefaultHost)
+    fmt.Printf("Port (%d by default): ", constant.DefaultPort)
+		port = util.ScanPortOr(constant.DefaultPort)
 	}
 
-	self.sshConfig = config
+	self.sshConfig = model.SshConfig{
+    Host: host,
+    Port: port,
+  }
 	return self
 }
 
 func (self *initCommand) initCache() *initCommand {
-  log.Println("initCache")
 	sshClient := util.MustSshClient(self.student, self.sshConfig)
 	defer sshClient.Close()
-  log.Println("ssh client created")
 
 	sftpClient := util.MustSftpClient(sshClient)
 	defer sftpClient.Close()
-  log.Println("sftp client created")
 
 	userlistFile := util.MustSftpOpen(sftpClient, constant.UserlistPath)
 	defer userlistFile.Close()
-  log.Println("userlist fetched")
 
 	self.cache = data.NewCacheFromUserlist(userlistFile)
-  log.Println("cache OK")
 	return self
 }
 
 func (self *initCommand) saveCache() *initCommand {
-  log.Println("saveCache")
 	self.cache.Save()
 	return self
 }
 
 func (self *initCommand) createAppConfig() *initCommand {
-  log.Println("createAppConfig")
 	type appConfig struct {
 		DefaultStudent *model.Student
 		*model.SshConfig

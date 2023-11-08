@@ -1,7 +1,6 @@
 package init_command
 
 import (
-	"github.com/markphelps/optional"
 	"github.com/spf13/cobra"
 
 	"github.com/alionapermes/sorry-malyavko/internal/command"
@@ -9,43 +8,47 @@ import (
 )
 
 type initCommand struct {
-  *cobra.Command
+	*cobra.Command
+	flagProvider util.FlagProvider
 }
 
 func New() *cobra.Command {
+	cobraCmd := &cobra.Command{Use: "init"}
+
 	cmd := initCommand{
-    Command: &cobra.Command{
-      Use: "init",
-      Run: run,
-    },
+		Command:      cobraCmd,
+		flagProvider: util.NewFlagProvider(cobraCmd),
 	}
+
+	cmd.Run = cmd.run
 	cmd.setup()
 
 	return cmd.Command
 }
 
 func (self *initCommand) setup() {
-	self.PersistentFlags().StringP("id", "n", "", "")
-	self.PersistentFlags().StringP("password", "p", "", "")
-	self.PersistentFlags().
-		BoolP("default", "d", false, "Use default ssh config")
+	self.flagProvider.
+		Register("id", "n", uint16(0), "").
+		Register("password", "p", "", "").
+		Register("default", "d", false, "Use default ssh config")
 }
 
-func run(cmd *cobra.Command, args []string) {
-  flags := command.InitFlags{DefaultSshConfig: false}
-
-  if flag := cmd.Flag("id"); flag != nil {
-    id := util.MustParseUint16(flag.Value.String())
-    flags.ID = optional.NewUint16(id)
+func (self *initCommand) run(cmd *cobra.Command, args []string) {
+	flags := command.InitFlags{
+    ID: nil,
+    Password: nil,
+    DefaultSshConfig: false,
   }
 
-  if flag := cmd.Flag("password"); flag != nil {
-    flags.Password = optional.NewString(flag.Value.String())
+  if id := self.flagProvider.Value("id"); id != nil {
+    flags.ID = id.(*uint16)
   }
 
-  if flag := cmd.Flag("default"); flag != nil {
-    flags.DefaultSshConfig = true
+  if password := self.flagProvider.Value("password"); password != nil {
+	  flags.Password = password.(*string)
   }
 
-  command.Init(flags)
+  flags.DefaultSshConfig = *self.flagProvider.ValueOrDefault("default").(*bool)
+
+	command.Init(flags)
 }

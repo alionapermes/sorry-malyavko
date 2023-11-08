@@ -4,6 +4,7 @@ go 1.21.1
 
 require (
 	github.com/BurntSushi/toml v1.3.2
+	github.com/bramvdbogaerde/go-scp v1.2.1
 	github.com/markphelps/optional v0.11.0
 	github.com/pkg/sftp v1.13.6
 	github.com/spf13/cobra v1.7.0
